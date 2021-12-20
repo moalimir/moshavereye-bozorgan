@@ -1,26 +1,27 @@
-<?php
-//
-$question = $_POST['question'];
-$messages = explode("\n", file_get_contents('./messages.txt'));
-$people = file_get_contents('./people.json');
-$json_people = json_decode($people, true);
 
-if (is_null($_POST['person'])) 
+
+<?php
+//this code is for php version 7.2 and upper 
+
+$json_entry = file_get_contents("people.json");
+$name_list = json_decode($json_entry, TRUE);
+$msg_list = file("messages.txt");
+
+if(!empty($_POST["person"]))
 {
-    $en_name = array_rand($json_people);
-    $fa_name = $json_people[$en_name];
+    error_reporting(0);
+    $name = $_POST["person"];
+    $fa_name = $name_list[$name];
+    $question = $_POST["question"];
+    $q_last = strlen($question)-1;
+    $msg_tag =((int) sha1($question.$fa_name));
+    $msg = $msg_list[$msg_tag % count($msg_list)];
 }
- else 
+else
 {
-    $en_name = $_POST['person'];
-    $fa_name = $json_people[$en_name];
-}
-if (empty($question)) {
-    $msg = 'سوال خود را بپرس!';
-}
-else 
-{
-    $msg = $messages[hexdec(substr(md5($question . $en_name), 0, 15)) % count($messages)];
+    $name = "abooreyhan";
+    $fa_name = $name_list[$name];
+    $question = "";
 }
 ?>
 <!DOCTYPE html>
@@ -34,19 +35,45 @@ else
 <p id="copyright">تهیه شده برای درس کارگاه کامپیوتر،دانشکده کامییوتر، دانشگاه صنعتی شریف</p>
 <div id="wrapper">
     <div id="title">
-        <span
-            id="label"
-            style="display: <?php echo empty($question) ? 'none' : 'inline' ?>;"
-        >پرسش:</span>
-        <span id="question"><?php echo $question ?></span>
+        <span id="label">
+            <?php
+            if( (!empty($question)) and str_starts_with($question, "آیا") and (str_ends_with($question, "?") or str_ends_with($question, "؟")) )
+            {
+                echo "پرسش:";
+            }
+            ?>
+        </span>
+        <span id="question">
+            <?php
+            if( (!empty($question)) and str_starts_with($question, "آیا") and (str_ends_with($question, "?") or str_ends_with($question, "؟")) )
+            {
+                echo $question;
+            }
+            ?>
+        </span>
     </div>
     <div id="container">
         <div id="message">
-            <p><?php echo $msg ?></p>
+            <p style= "font-size: 430%">
+                <?php
+                if(!empty($question))
+                {
+                    if( str_starts_with($question, "آیا") and (str_ends_with($question, "?") or str_ends_with($question, "؟")) )
+                    {
+                        echo $msg;
+                    }
+                    else
+                    {
+                        echo "سوال درستی پرسیده نشده است";
+                    }
+                }
+                else echo "سوال خود را بپرس!";
+                ?>
+            </p>
         </div>
         <div id="person">
             <div id="person">
-                <img src="images/people/<?php echo "$en_name.jpg" ?>"/>
+                <img src="images/people/<?php echo "$name.jpg" ?>"/>
                 <p id="person-name"><?php echo $fa_name ?></p>
             </div>
         </div>
@@ -58,9 +85,10 @@ else
             را از
             <select name="person">
                 <?php
-                foreach ($json_people as $key => $value) 
+                foreach($name_list as $english => $farsi)
                 {
-                    echo '<option name="" value="'.$key.'" '. ($en_name == $key ? 'selected' : '') .'>'.$value.'</option>';
+                    if($english == $name) echo "<option value = $english selected>$farsi</option>";
+                    else echo "<option value = $english>$farsi</option>";
                 }
                 ?>
             </select>
